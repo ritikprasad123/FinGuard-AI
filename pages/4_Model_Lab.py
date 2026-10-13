@@ -36,7 +36,7 @@ from src.models.registry import get_active_model, set_active_model, list_availab
 from src.data.loader import check_benchmark_dataset_exists, load_csv_dataset
 from src.data.demo_generator import generate_synthetic_demo_data
 
-configure_page(page_title="Model Performance")
+configure_page(page_title="Model Lab")
 
 # Session State Setup
 if "dataset" not in st.session_state or st.session_state.dataset is None:
@@ -50,20 +50,24 @@ if "dataset" not in st.session_state or st.session_state.dataset is None:
             pass
 
 render_header(
-    title="Model Performance & Evaluation",
-    subtitle="Mathematical validation metrics, Precision-Recall optimization, confusion matrices, and baseline comparisons.",
+    title="Model Lab & Comparative Evaluation",
+    subtitle="Multi-model training studio, empirical holdout comparisons, decision trade-off curves, and configuration exports.",
     badge_text="METRICS VERIFIED",
     badge_type="high"
 )
 
 if "dataset" not in st.session_state or st.session_state.dataset is None:
-    st.info("No dataset loaded. Please generate synthetic demo data or load the benchmark dataset from Executive Overview.")
-    if st.button("Generate Synthetic Demo Batch", type="primary"):
+    if settings.DEFAULT_DEMO_PATH.is_file():
+        try:
+            st.session_state.dataset = pd.read_csv(settings.DEFAULT_DEMO_PATH)
+            st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+        except Exception:
+            pass
+    if st.session_state.dataset is None:
         demo_df = generate_synthetic_demo_data(n_samples=settings.DEMO_SAMPLES_COUNT, save_to_file=True)
         st.session_state.dataset = demo_df
-        st.session_state.data_source_type = "DEMO"
-        st.rerun()
-    st.stop()
+        st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+
 
 df = st.session_state.dataset
 active_model = get_active_model()
@@ -256,3 +260,58 @@ for b_name, b_val in baselines.items():
 
 st.dataframe(pd.DataFrame(comp_rows), use_container_width=True)
 
+
+# -------------------------------------------------------------
+# REPRODUCIBLE MODEL CONFIGURATION EXPORT (Section 6 - Page 4)
+# -------------------------------------------------------------
+st.markdown("---")
+st.markdown("### Reproducible Model Architecture Configuration")
+st.caption("Export audited serialization metadata and operational hyperparameters for governance compliance.")
+
+import json
+config_export = {
+    "app_name": settings.APP_NAME,
+    "version": settings.VERSION,
+    "active_model_name": active_model.model_name if active_model else "None",
+    "active_model_id": active_model.model_id if active_model else "None",
+    "evaluation_threshold": round(eval_cutoff, 4),
+    "feature_dimensions": settings.REQUIRED_BENCHMARK_FEATURES,
+    "scaler_type": settings.SCALER_TYPE,
+    "timestamp_utc": pd.Timestamp.utcnow().isoformat(),
+    "provenance": {
+        "dataset_rows": len(df),
+        "data_source_type": st.session_state.get("data_source_type", "DEMO"),
+        "has_ground_truth": settings.TARGET_COL in df.columns
+    },
+    "metrics_snapshot": {
+        "precision": report.precision,
+        "recall": report.recall,
+        "f1_score": report.f1_score,
+        "pr_auc": report.pr_auc,
+        "roc_auc": report.roc_auc,
+        "true_positives": report.true_positives,
+        "false_positives": report.false_positives,
+        "false_negatives": report.false_negatives
+    }
+}
+
+config_json_str = json.dumps(config_export, indent=2)
+
+col_exp1, col_exp2 = st.columns([2, 1])
+with col_exp1:
+    st.json(config_export)
+with col_exp2:
+    st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+    st.download_button(
+        label="Download Reproducible Config (JSON)",
+        data=config_json_str.encode("utf-8"),
+        file_name=f"finguard_model_config_{active_model.model_id if active_model else 'default'}.json",
+        mime="application/json",
+        use_container_width=True
+    )
+
+# Legal & Regulatory Decision-Support Notice
+st.markdown(
+    f"<div class='fg-legal-disclaimer'><strong>Regulatory Compliance Notice:</strong> {settings.DISCLAIMER_NOTICE}</div>",
+    unsafe_allow_html=True
+)

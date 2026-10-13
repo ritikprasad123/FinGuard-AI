@@ -24,7 +24,7 @@ from src.investigation.case_manager import CaseManager
 from src.data.loader import check_benchmark_dataset_exists, load_csv_dataset
 from src.data.demo_generator import generate_synthetic_demo_data
 
-configure_page(page_title="Transaction Monitoring")
+configure_page(page_title="Transaction Explorer")
 case_manager = CaseManager()
 
 # Session State Setup
@@ -39,20 +39,24 @@ if "dataset" not in st.session_state or st.session_state.dataset is None:
             pass
 
 render_header(
-    title="Transaction Monitoring & Search",
+    title="Transaction Explorer & Surveillance",
     subtitle="Continuous high-throughput transaction auditing, multi-parameter filtering, and latent dimension inspection.",
     badge_text="MONITORING ACTIVE",
     badge_type="high"
 )
 
 if "dataset" not in st.session_state or st.session_state.dataset is None:
-    st.info("No dataset loaded. Please generate synthetic demo data or load the benchmark dataset from the Executive Overview.")
-    if st.button("Generate Demo Batch Now", type="primary"):
+    if settings.DEFAULT_DEMO_PATH.is_file():
+        try:
+            st.session_state.dataset = pd.read_csv(settings.DEFAULT_DEMO_PATH)
+            st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+        except Exception:
+            pass
+    if st.session_state.dataset is None:
         demo_df = generate_synthetic_demo_data(n_samples=settings.DEMO_SAMPLES_COUNT, save_to_file=True)
         st.session_state.dataset = demo_df
-        st.session_state.data_source_type = "DEMO"
-        st.rerun()
-    st.stop()
+        st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+
 
 df = st.session_state.dataset
 active_model = get_active_model()
@@ -164,6 +168,20 @@ st.dataframe(
     height=400
 )
 
+# Export Filtered Results
+col_dl1, col_dl2 = st.columns([2, 1])
+with col_dl1:
+    st.caption(f"Showing page {curr_page} of {total_pages} ({len(filtered_df):,} matching transactions).")
+with col_dl2:
+    csv_bytes = filtered_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label=f"Export Filtered Results (CSV: {len(filtered_df):,} rows)",
+        data=csv_bytes,
+        file_name="finguard_filtered_transactions.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
 # Deep Transaction Inspection
 st.markdown("---")
 st.markdown("### Transaction Detail Inspector")
@@ -202,3 +220,10 @@ if inspect_id:
                 initial_note=f"Triage risk: {target_row['Severity']} rating exceeding threshold {active_threshold}."
             )
             st.success(f"Created Case: `{new_cid}` in persistent SQLite database!")
+
+
+# Legal & Regulatory Decision-Support Notice
+st.markdown(
+    f"<div class='fg-legal-disclaimer'><strong>Regulatory Compliance Notice:</strong> {settings.DISCLAIMER_NOTICE}</div>",
+    unsafe_allow_html=True
+)

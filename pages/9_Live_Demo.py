@@ -23,7 +23,7 @@ from src.models.registry import get_active_model
 from src.data.loader import check_benchmark_dataset_exists, load_csv_dataset
 from src.data.demo_generator import generate_synthetic_demo_data
 
-configure_page(page_title="Live-Style Monitor")
+configure_page(page_title="Live Monitoring Demo")
 
 # Session State Setup
 if "dataset" not in st.session_state or st.session_state.dataset is None:
@@ -37,7 +37,7 @@ if "dataset" not in st.session_state or st.session_state.dataset is None:
             pass
 
 render_header(
-    title="Simulated Real-Time Stream Monitor",
+    title="Live Monitoring Demo & Stream Surveillance",
     subtitle="Transaction-by-transaction model inference, live anomaly velocity tracking, and alert triggers.",
     badge_text="STREAM SURVEILLANCE",
     badge_type="high"
@@ -54,13 +54,17 @@ render_banner(
 )
 
 if "dataset" not in st.session_state or st.session_state.dataset is None:
-    st.info("No transactions available to stream. Please generate demo data first.")
-    if st.button("Generate Demo Batch Now", type="primary"):
+    if settings.DEFAULT_DEMO_PATH.is_file():
+        try:
+            st.session_state.dataset = pd.read_csv(settings.DEFAULT_DEMO_PATH)
+            st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+        except Exception:
+            pass
+    if st.session_state.dataset is None:
         demo_df = generate_synthetic_demo_data(n_samples=settings.DEMO_SAMPLES_COUNT, save_to_file=True)
         st.session_state.dataset = demo_df
-        st.session_state.data_source_type = "DEMO"
-        st.rerun()
-    st.stop()
+        st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+
 
 df = st.session_state.dataset
 active_model = get_active_model()
@@ -162,3 +166,10 @@ if not recent_df.empty:
     )
 else:
     st.info("Click 'Step 10' or 'Step 50' above to stream transactions and observe per-record model inference.")
+
+
+# Legal & Regulatory Decision-Support Notice
+st.markdown(
+    f"<div class='fg-legal-disclaimer'><strong>Regulatory Compliance Notice:</strong> {settings.DISCLAIMER_NOTICE}</div>",
+    unsafe_allow_html=True
+)

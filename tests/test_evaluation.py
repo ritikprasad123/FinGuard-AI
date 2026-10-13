@@ -83,3 +83,43 @@ def test_baseline_comparisons_metrics(eval_data):
         assert "true_positives" in b_res
         assert 0.0 <= b_res["precision"] <= 1.0
         assert 0.0 <= b_res["recall"] <= 1.0
+
+
+def test_evaluation_without_labels_handling(eval_data):
+    """Verifies that model inference succeeds on unlabeled data, and explains supervised limitations."""
+    model = IsolationForestAnomalyModel(n_estimators=50, random_state=42)
+    model.fit(eval_data)
+
+    unlabeled_X = eval_data.drop(columns=["Class"])
+    # Prediction should work seamlessly without Class column
+    scores = model.predict_score(unlabeled_X)
+    assert len(scores) == len(unlabeled_X)
+    assert (scores >= 0.0).all() and (scores <= 1.0).all()
+
+    # Model inference flags anomalies purely based on threshold
+    preds = model.predict(unlabeled_X)
+    assert len(preds) == len(unlabeled_X)
+    assert set(preds).issubset({0, 1})
+
+
+def test_csv_export_capabilities(eval_data, tmp_path):
+    """Verifies that scored datasets and filtered results can be exported cleanly to CSV."""
+    model = IsolationForestAnomalyModel(n_estimators=50, random_state=42)
+    model.fit(eval_data)
+
+    scores = model.predict_score(eval_data)
+    export_df = eval_data.copy()
+    export_df["Risk_Score"] = scores
+    export_df["Prediction"] = np.where(scores >= 0.65, "ANOMALY", "NORMAL")
+
+    out_csv = tmp_path / "scored_export.csv"
+    export_df.to_csv(out_csv, index=False)
+
+    assert out_csv.exists()
+    assert out_csv.stat().st_size > 0
+
+    # Read back and verify integrity
+    reloaded = pd.read_csv(out_csv)
+    assert len(reloaded) == len(eval_data)
+    assert "Risk_Score" in reloaded.columns
+    assert "Prediction" in reloaded.columns

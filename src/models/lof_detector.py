@@ -203,3 +203,4 @@ class LocalOutlierFactorAnomalyModel(BaseAnomalyModel):
         instance.model = payload.get("model_obj", None)
         logger.info(f"Loaded LOF model artifact from: {path} (Features: {len(instance.feature_names_in_)})")
         return instance
+

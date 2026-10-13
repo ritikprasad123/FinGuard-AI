@@ -19,11 +19,11 @@ from components.cards import render_header, render_metric_card
 from src.investigation.case_manager import CaseManager
 from src.reports.investigation_report import generate_case_investigation_report
 
-configure_page(page_title="Case Management Desk")
+configure_page(page_title="Investigation Cases")
 case_manager = CaseManager()
 
 render_header(
-    title="Compliance Case Management",
+    title="Investigation Cases & Incident Desk",
     subtitle="Persistent SQLite investigation dossiers, chronological notes, status tracking, and audit trails.",
     badge_text="SQLITE PERSISTENT",
     badge_type="high"
@@ -222,3 +222,10 @@ with tab_view:
                 file_name=f"{selected_id}_case_report.md",
                 mime="text/markdown"
             )
+
+
+# Legal & Regulatory Decision-Support Notice
+st.markdown(
+    f"<div class='fg-legal-disclaimer'><strong>Regulatory Compliance Notice:</strong> {settings.DISCLAIMER_NOTICE}</div>",
+    unsafe_allow_html=True
+)

@@ -36,6 +36,17 @@ if "dataset" not in st.session_state or st.session_state.dataset is None:
             st.session_state.data_source_type = "BENCHMARK"
         except Exception:
             pass
+    if st.session_state.dataset is None and settings.DEFAULT_DEMO_PATH.is_file():
+        try:
+            st.session_state.dataset = pd.read_csv(settings.DEFAULT_DEMO_PATH)
+            st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+        except Exception:
+            pass
+    if st.session_state.dataset is None:
+        demo_df = generate_synthetic_demo_data(n_samples=settings.DEMO_SAMPLES_COUNT, save_to_file=True)
+        st.session_state.dataset = demo_df
+        st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+
 
 render_header(
     title="Alert Center & Forensic Triage",
@@ -268,3 +279,48 @@ else:
                         case_manager.link_alert_to_case(a_id, new_cid)
                         st.success(f"Created and linked case {new_cid}!")
                         st.rerun()
+
+
+
+# -------------------------------------------------------------
+# TRANSACTION INVESTIGATION ASSISTANT (Section 7)
+# -------------------------------------------------------------
+st.markdown("---")
+st.markdown("### Forensic Investigation Assistant")
+st.caption("Ask forensic questions grounded in active transaction mathematics, scores, and cases.")
+
+from src.investigation.assistant import InvestigationAssistant
+
+col_chip1, col_chip2, col_chip3, col_chip4 = st.columns(4)
+chip_query = None
+with col_chip1:
+    if st.button("Highest Anomaly Scores", use_container_width=True):
+        chip_query = "Which transactions have the highest anomaly scores?"
+with col_chip2:
+    if st.button("Analyze Alert Patterns", use_container_width=True):
+        chip_query = "What patterns appear among flagged transactions?"
+with col_chip3:
+    if st.button("Count Above Threshold", use_container_width=True):
+        chip_query = "How many transactions were flagged above the selected threshold?"
+with col_chip4:
+    if st.button("Summarize Active Cases", use_container_width=True):
+        chip_query = "Summarize this investigation case"
+
+user_q = st.text_input("Enter Forensic Query or Question", value=chip_query if chip_query else "", placeholder="e.g. Why was TXN-SURV-10042 flagged? or Which transactions have the highest anomaly scores?")
+
+if user_q:
+    with st.spinner("Analyzing operational state..."):
+        ans = InvestigationAssistant.query(
+            prompt=user_q,
+            df=st.session_state.dataset,
+            case_manager=case_manager,
+            model=active_model,
+            threshold=active_threshold
+        )
+        st.markdown(ans["response_markdown"])
+
+# Legal & Regulatory Decision-Support Notice
+st.markdown(
+    f"<div class='fg-legal-disclaimer'><strong>Regulatory Compliance Notice:</strong> {settings.DISCLAIMER_NOTICE}</div>",
+    unsafe_allow_html=True
+)

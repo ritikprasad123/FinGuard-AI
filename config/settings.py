@@ -11,20 +11,21 @@ from typing import List, Dict, Optional
 
 @dataclass(frozen=True)
 class DesignTokens:
-    """FinGuard AI Enterprise Design System Tokens."""
-    BG_COLOR: str = "#0B0D10"           # Deep charcoal background
-    SIDEBAR_COLOR: str = "#101318"      # Black sidebar
-    CARD_BG: str = "#15191F"            # Surface cards
-    ELEVATED_CARD_BG: str = "#1B2028"   # Elevated cards
-    PRIMARY_RED: str = "#E5484D"        # Primary crimson-red accent
-    CRITICAL_RED: str = "#FF4D5A"       # Critical anomaly alert
-    SUCCESS_GREEN: str = "#35C98A"      # Normal transaction green
-    PRIMARY_TEXT: str = "#F4F6F8"       # Primary text
-    SECONDARY_TEXT: str = "#9AA4B2"     # Soft grey secondary text
-    BORDER_COLOR: str = "#292F39"       # Subtle card borders
-    MUTED_ACCENT: str = "#232936"       # Subtle hover and card background
-    ACCENT_BLUE: str = "#3B82F6"        # Informational accent
-    WARNING_AMBER: str = "#F59E0B"      # Warning badge accent
+    """FinGuard AI Enterprise Design System Tokens (Dark Navy & Electric Blue Aesthetic)."""
+    BG_COLOR: str = "#0B0F19"           # Premium dark navy / charcoal
+    SIDEBAR_COLOR: str = "#0D1322"      # Deeper dark navy sidebar
+    CARD_BG: str = "#131B2E"            # Surface navy card
+    ELEVATED_CARD_BG: str = "#1A253D"   # Elevated navy slate card
+    PRIMARY_RED: str = "#E11D48"        # Primary crimson-rose accent
+    CRITICAL_RED: str = "#F43F5E"       # Critical anomaly alert
+    SUCCESS_GREEN: str = "#10B981"      # Verified normal transaction green
+    PRIMARY_TEXT: str = "#F3F4F6"       # Crisp primary text
+    SECONDARY_TEXT: str = "#94A3B8"     # Slate secondary text
+    BORDER_COLOR: str = "#1E2C4A"       # Subtle slate-navy card border
+    MUTED_ACCENT: str = "#1E293B"       # Subtle hover accent
+    ACCENT_BLUE: str = "#00D4FF"        # Restrained electric-blue accent
+    ACCENT_TEAL: str = "#14B8A6"        # Teal balance accent
+    WARNING_AMBER: str = "#F59E0B"      # Warning amber badge accent
 
 
 @dataclass
@@ -32,9 +33,13 @@ class Settings:
     """Application configuration parameters and path management."""
     # Product Metadata
     APP_NAME: str = "FinGuard AI"
-    APP_TAGLINE: str = "Enterprise Real-Time Financial Anomaly Detection"
-    VERSION: str = "1.0.0-phase1"
-    AUTHOR: str = "FinGuard AI Engineering"
+    APP_TAGLINE: str = "Intelligent Transaction Risk Monitoring"
+    VERSION: str = "1.2.0-Production"
+    AUTHOR: str = "FinGuard AI Engineering Team"
+    DISCLAIMER_NOTICE: str = (
+        "Machine-learning risk signals are decision-support indicators. "
+        "Alerts require appropriate review and are not proof of fraud."
+    )
 
     # Base Paths
     BASE_DIR: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent)

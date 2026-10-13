@@ -77,3 +77,4 @@ def test_lof_empty_data_handling():
     # Untrained scoring
     with pytest.raises(RuntimeError, match="must be fitted"):
         model.predict_score(pd.DataFrame({"V1": [1.0]}))
+

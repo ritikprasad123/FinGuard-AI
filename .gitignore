@@ -13,7 +13,18 @@ venv/
 env/
 ENV/
 
-# Data artifacts (preserve structure)
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+
+# Data artifacts (preserve folder structure via .gitkeep)
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
@@ -31,10 +42,14 @@ models/*
 .vscode/
 *.swp
 
-# OS
+# Operating System files
 .DS_Store
 Thumbs.db
 
 # Logs
 logs/
 *.log
+
+# Archives
+*.zip
+*.tar.gz

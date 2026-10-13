@@ -67,31 +67,23 @@ render_header(
     badge_type="success" if st.session_state.dataset is not None else "neutral"
 )
 
-# Zero-Data Setup Screen
+# Automatic Zero-Friction Fallback: Load demo transactions if benchmark is absent
 if st.session_state.dataset is None:
-    render_banner(
-        title="Surveillance Dataset Required",
-        message=(
-            f"The public credit card fraud benchmark dataset was not found at <code>{settings.DEFAULT_BENCHMARK_PATH}</code>. "
-            "To maintain strict financial compliance, FinGuard AI never fabricates missing historical records. "
-            "You can generate synthetic demo transactions or import the verified benchmark dataset."
-        ),
-        level="info"
-    )
-    render_setup_card()
+    if settings.DEFAULT_DEMO_PATH.is_file():
+        try:
+            st.session_state.dataset = pd.read_csv(settings.DEFAULT_DEMO_PATH)
+            st.session_state.data_source_type = "DEMO (SYNTHETIC)"
+        except Exception:
+            pass
+    if st.session_state.dataset is None:
+        demo_df = generate_synthetic_demo_data(
+            n_samples=settings.DEMO_SAMPLES_COUNT,
+            fraud_ratio=settings.DEMO_ANOMALY_RATIO,
+            save_to_file=True
+        )
+        st.session_state.dataset = demo_df
+        st.session_state.data_source_type = "DEMO (SYNTHETIC)"
 
-    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
-    if st.button("Generate Synthetic Demo Batch (5,000 Transactions)", type="primary"):
-        with st.spinner("Generating demo transaction stream..."):
-            demo_df = generate_synthetic_demo_data(
-                n_samples=settings.DEMO_SAMPLES_COUNT,
-                fraud_ratio=settings.DEMO_ANOMALY_RATIO,
-                save_to_file=True
-            )
-            st.session_state.dataset = demo_df
-            st.session_state.data_source_type = "DEMO"
-            st.rerun()
-    st.stop()
 
 # Data is available
 df = st.session_state.dataset
@@ -354,13 +346,21 @@ st.markdown(
     """
     <div style="background: var(--bg-card); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 1rem;">
         <div style="font-weight: 600; color: var(--primary-text); margin-bottom: 0.5rem;">Forensic Action Next Steps:</div>
-        <div style="color: var(--secondary-text); font-size: 0.85rem; line-height: 1.6;">
             Navigate to <strong>Transaction Monitoring</strong> to filter individual transactions &bull;
+            Triage urgent detections in <strong>Alert Center</strong> &bull;
             Inspect <strong>Model Performance</strong> to evaluate Precision/Recall metrics &bull;
             Consult <strong>AI Investigation Assistant</strong> for mathematical feature attribution &bull;
-            Manage active cases in <strong>Case Management</strong>.
+            Manage active cases in <strong>Case Management</strong> &bull;
+            Export dossiers from <strong>Investigation Reports</strong>.
         </div>
     </div>
     """,
+    unsafe_allow_html=True
+)
+
+
+# Legal & Regulatory Decision-Support Notice
+st.markdown(
+    f"<div class='fg-legal-disclaimer'><strong>Regulatory Compliance Notice:</strong> {settings.DISCLAIMER_NOTICE}</div>",
     unsafe_allow_html=True
 )

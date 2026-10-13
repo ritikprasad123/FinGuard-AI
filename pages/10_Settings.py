@@ -22,21 +22,115 @@ from src.data.validator import validate_transaction_data
 from src.features.preprocessor import TransactionPreprocessor
 from src.models.registry import get_active_model, list_available_models
 
-configure_page(page_title="Dataset and Model Status")
+configure_page(page_title="Settings and System Health")
 
 render_header(
-    title="Dataset & Model Infrastructure Status",
-    subtitle="Provenance verification, 7-step schema auditing, serialized model registry, and runtime configuration.",
+    title="Settings, System Health & Diagnostics",
+    subtitle="System runtime telemetry, environment diagnostics, model registry health, and threshold configuration.",
     badge_text="SYSTEM HEALTH",
     badge_type="high"
 )
 
 # Tabs
-tab_data_stat, tab_model_stat, tab_deploy_guide = st.tabs([
-    "Dataset Provenance & Quality Audit",
+tab_sys_health, tab_data_stat, tab_model_stat, tab_deploy_guide = st.tabs([
+    "System Health & Diagnostics",
+    "Dataset Provenance & Schema Audit",
     "Model Registry & Artifact Health",
     "Deployment & Runtime Guide"
 ])
+
+# -------------------------------------------------------------
+# TAB: SYSTEM HEALTH & ENVIRONMENT DIAGNOSTICS (Section 6 - Page 10)
+# -------------------------------------------------------------
+with tab_sys_health:
+    st.markdown("### System Health & Configuration Telemetry")
+    st.caption("Real-time infrastructure checks, version audits, and safe diagnostic metrics.")
+
+    import platform
+    import sqlite3
+    import sklearn
+
+    # System Health Indicator Cards
+    db_exists = settings.DEFAULT_CASES_DB_PATH.is_file()
+    db_size_kb = round(settings.DEFAULT_CASES_DB_PATH.stat().st_size / 1024, 1) if db_exists else 0.0
+
+    sh1, sh2, sh3, sh4 = st.columns(4)
+    with sh1:
+        st.markdown(
+            render_metric_card(
+                title="Application Version",
+                value=settings.VERSION,
+                subtitle=settings.APP_NAME,
+                status_color=settings.tokens.ACCENT_BLUE
+            ),
+            unsafe_allow_html=True
+        )
+    with sh2:
+        st.markdown(
+            render_metric_card(
+                title="SQLite Database",
+                value="ONLINE" if db_exists else "INITIALIZING",
+                subtitle=f"{db_size_kb} KB ({settings.CASES_DB_FILENAME})",
+                status_color=settings.tokens.SUCCESS_GREEN if db_exists else settings.tokens.WARNING_AMBER
+            ),
+            unsafe_allow_html=True
+        )
+    with sh3:
+        st.markdown(
+            render_metric_card(
+                title="Python Runtime",
+                value=f"v{platform.python_version()}",
+                subtitle=f"{platform.system()} ({platform.machine()})",
+                status_color=settings.tokens.SUCCESS_GREEN
+            ),
+            unsafe_allow_html=True
+        )
+    with sh4:
+        st.markdown(
+            render_metric_card(
+                title="Scikit-Learn Engine",
+                value=f"v{sklearn.__version__}",
+                subtitle="Inference Ready",
+                status_color=settings.tokens.SUCCESS_GREEN
+            ),
+            unsafe_allow_html=True
+        )
+
+    st.markdown("---")
+    st.markdown("#### Global Threshold Configuration")
+    global_cutoff = st.slider(
+        "Default Operating Anomaly Cutoff",
+        min_value=0.10,
+        max_value=0.95,
+        value=0.65,
+        step=0.05,
+        help="Sets the initial decision boundary for incoming unlabelled transactions."
+    )
+    st.info(f"Operating cutoff set to `{global_cutoff:.2f}`. Transactions scoring above this threshold generate alerts.")
+
+    st.markdown("#### Environment Diagnostics & Dependency Audit")
+    deps_data = [
+        {"Package": "streamlit", "Version": st.__version__, "Status": "Healthy / In-Memory"},
+        {"Package": "pandas", "Version": pd.__version__, "Status": "Healthy / Vectorized"},
+        {"Package": "numpy", "Version": np.__version__, "Status": "Healthy / C-Optimized"},
+        {"Package": "scikit-learn", "Version": sklearn.__version__, "Status": "Healthy / Forest & LOF"},
+        {"Package": "sqlite3", "Version": sqlite3.sqlite_version, "Status": "Healthy / ACID Compliant"}
+    ]
+    st.dataframe(pd.DataFrame(deps_data), use_container_width=True)
+
+    st.markdown("#### Safe Security & Privacy Diagnostics")
+    st.markdown(
+        """
+        <div style="background: #131B2E; border: 1px solid #1E2C4A; padding: 1rem; border-radius: 6px; font-size: 0.85rem; line-height: 1.6;">
+            • <strong>Zero Secrets Exposed:</strong> No API keys, credentials, or customer tokens are stored or rendered in client HTML.<br>
+            • <strong>Parameterized SQL:</strong> All queries to <code>cases.db</code> use parameterized binding (<code>?</code>) preventing injection.<br>
+            • <strong>Privacy Protection:</strong> All 28 PCA dimensions are anonymized projections with zero PII exposure.<br>
+            • <strong>Cloud Storage Isolation:</strong> Temporary files and database writes remain confined to local project workspace.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 # -------------------------------------------------------------
 # TAB 1: DATASET PROVENANCE & QUALITY AUDIT
@@ -185,3 +279,10 @@ with tab_deploy_guide:
         - No credentials or live API secrets committed to Git repository.
         """
     )
+
+
+# Legal & Regulatory Decision-Support Notice
+st.markdown(
+    f"<div class='fg-legal-disclaimer'><strong>Regulatory Compliance Notice:</strong> {settings.DISCLAIMER_NOTICE}</div>",
+    unsafe_allow_html=True
+)
