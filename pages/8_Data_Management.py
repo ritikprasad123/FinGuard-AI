@@ -18,7 +18,8 @@ from config.settings import settings
 from components.theme import configure_page
 from components.cards import render_header, render_metric_card, render_banner
 from src.data.loader import check_benchmark_dataset_exists, load_csv_dataset, get_dataset_provenance
-from src.data.validator import validate_transaction_data, ValidationReport
+from src.data.validator import validate_transaction_data, DataQualityReport
+ValidationReport = DataQualityReport
 from src.data.demo_generator import generate_synthetic_demo_data
 try:
     from src.reports.quality_report import generate_markdown_quality_report

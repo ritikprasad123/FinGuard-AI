@@ -41,11 +41,17 @@ class IsolationForestAnomalyModel(BaseAnomalyModel):
         if len(X) == 0:
             raise ValueError("Cannot fit model on an empty dataset.")
 
-        exclude_cols = ["Class", "Transaction_ID", "Timestamp", "_DATA_SOURCE", "_IS_DEMO", "Risk_Score", "Risk_Reason"]
-        feature_cols = [c for c in X.columns if c not in exclude_cols]
+        exclude_cols = [
+            "Class", "Transaction_ID", "Timestamp", "_DATA_SOURCE", "_IS_DEMO",
+            "Risk_Score", "Risk_Reason", "Risk_Tier", "Action_Required", "Anomaly_Indicators",
+            "Prediction", "Severity", "anomaly_score", "investigation_status", "alert_id"
+        ]
+        # Strictly select numeric columns to prevent string conversion errors
+        num_df = X.select_dtypes(include=[np.number])
+        feature_cols = [c for c in num_df.columns if c not in exclude_cols]
         self.feature_names_in_ = feature_cols
 
-        X_train = X[feature_cols].copy()
+        X_train = num_df[feature_cols].copy()
         logger.info(f"Training Isolation Forest with {self.n_estimators} estimators on {len(X_train)} samples.")
 
         self.model = IsolationForest(

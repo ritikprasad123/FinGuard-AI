@@ -205,10 +205,14 @@ def split_transaction_data(
     """
     logger.info(f"Executing train/test split (test_size={test_size:.1%}, random_state={random_state}).")
 
-    exclude_cols = [target_col, "Transaction_ID", "Timestamp", "_DATA_SOURCE", "_IS_DEMO", "Risk_Score", "Risk_Reason"]
+    exclude_cols = [
+        target_col, "Transaction_ID", "Timestamp", "_DATA_SOURCE", "_IS_DEMO",
+        "Risk_Score", "Risk_Reason", "Risk_Tier", "Action_Required", "Anomaly_Indicators",
+        "Prediction", "Severity", "anomaly_score", "investigation_status", "alert_id"
+    ]
     feature_cols = [c for c in df.columns if c not in exclude_cols]
 
-    X = df[feature_cols].copy()
+    X = df[feature_cols].select_dtypes(include=[np.number]).copy()
 
     if target_col in df.columns:
         y = df[target_col].copy()

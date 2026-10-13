@@ -71,9 +71,11 @@ class LocalOutlierFactorAnomalyModel(BaseAnomalyModel):
 
         exclude_cols = [
             "Class", "Transaction_ID", "Timestamp", "_DATA_SOURCE", "_IS_DEMO",
-            "Risk_Score", "Risk_Reason", "Risk_Tier", "Action_Required", "Anomaly_Indicators"
+            "Risk_Score", "Risk_Reason", "Risk_Tier", "Action_Required", "Anomaly_Indicators",
+            "Prediction", "Severity", "anomaly_score", "investigation_status", "alert_id"
         ]
-        feature_cols = [c for c in X.columns if c not in exclude_cols]
+        num_df = X.select_dtypes(include=[np.number])
+        feature_cols = [c for c in num_df.columns if c not in exclude_cols]
         if not feature_cols:
             raise ValueError("No valid numeric feature columns available for LOF training.")
 
@@ -85,10 +87,10 @@ class LocalOutlierFactorAnomalyModel(BaseAnomalyModel):
                 f"Dataset size ({len(X)}) exceeds LOF memory-safe threshold ({self.max_train_samples}). "
                 f"Sampling {self.max_train_samples} transactions for nearest-neighbor reference index."
             )
-            sampled_df = X.sample(n=self.max_train_samples, random_state=self.random_state)
+            sampled_df = num_df.sample(n=self.max_train_samples, random_state=self.random_state)
             X_train = sampled_df[feature_cols].copy()
         else:
-            X_train = X[feature_cols].copy()
+            X_train = num_df[feature_cols].copy()
 
         # Fill any missing values with median for robust distance computation
         X_train = X_train.fillna(X_train.median())

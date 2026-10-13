@@ -45,12 +45,14 @@ class AutoencoderAnomalyModel(BaseAnomalyModel):
 
         exclude_cols = [
             "Class", "Transaction_ID", "Timestamp", "_DATA_SOURCE", "_IS_DEMO",
-            "Risk_Score", "Risk_Reason", "Risk_Tier", "Action_Required", "Anomaly_Indicators"
+            "Risk_Score", "Risk_Reason", "Risk_Tier", "Action_Required", "Anomaly_Indicators",
+            "Prediction", "Severity", "anomaly_score", "investigation_status", "alert_id"
         ]
-        feature_cols = [c for c in X.columns if c not in exclude_cols]
+        num_df = X.select_dtypes(include=[np.number])
+        feature_cols = [c for c in num_df.columns if c not in exclude_cols]
         self.feature_names_in_ = feature_cols
 
-        X_train = X[feature_cols].copy()
+        X_train = num_df[feature_cols].copy()
         logger.info(f"Training Autoencoder on {len(X_train)} records (architecture={self.hidden_layer_sizes}).")
 
         self.model = MLPRegressor(

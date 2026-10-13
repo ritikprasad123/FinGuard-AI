@@ -245,3 +245,7 @@ def validate_transaction_data(
         warnings=warnings,
         checks_summary=checks
     )
+
+
+# Backward-compatibility alias
+ValidationReport = DataQualityReport

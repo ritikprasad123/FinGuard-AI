@@ -99,7 +99,11 @@ if settings.TARGET_COL not in df.columns:
 # Cache train/test split to avoid recomputing
 @st.cache_data
 def get_cached_split(data_len: int, target_sum: int):
-    return split_transaction_data(df, target_col="Class", test_size=0.20, random_state=42)
+    # Sanitize input df so only numeric feature columns and Class are split
+    clean_cols = [c for c in df.select_dtypes(include=[np.number]).columns if c not in ["Risk_Score", "anomaly_score"]]
+    if settings.TARGET_COL in df.columns and settings.TARGET_COL not in clean_cols:
+        clean_cols.append(settings.TARGET_COL)
+    return split_transaction_data(df[clean_cols], target_col="Class", test_size=0.20, random_state=42)
 
 X_train, X_test, y_train, y_test = get_cached_split(len(df), int(df[settings.TARGET_COL].sum()))
 

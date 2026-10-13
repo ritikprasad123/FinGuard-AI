@@ -1,3 +1,4 @@
+import numpy as np
 """FinGuard AI - Dataset and Model Status.
 
 Dataset provenance, 7-step schema quality validation, model registry status,
@@ -49,6 +50,7 @@ with tab_sys_health:
     import platform
     import sqlite3
     import sklearn
+    import numpy as np
 
     # System Health Indicator Cards
     db_exists = settings.DEFAULT_CASES_DB_PATH.is_file()
