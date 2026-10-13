@@ -71,6 +71,10 @@ if "dataset" not in st.session_state or st.session_state.dataset is None:
 
 df = st.session_state.dataset
 active_model = get_active_model()
+if active_model is None:
+    from src.models.isolation_forest import IsolationForestAnomalyModel
+    active_model = IsolationForestAnomalyModel()
+    set_active_model(active_model)
 
 # Model Selector & Switcher
 st.markdown("### Active Model Deployment")
@@ -107,8 +111,13 @@ def get_cached_split(data_len: int, target_sum: int):
 
 X_train, X_test, y_train, y_test = get_cached_split(len(df), int(df[settings.TARGET_COL].sum()))
 
-# Ensure model is trained
-if active_model and not active_model.is_trained:
+# Ensure active model is fully trained
+if active_model is None:
+    from src.models.isolation_forest import IsolationForestAnomalyModel
+    active_model = IsolationForestAnomalyModel()
+    set_active_model(active_model)
+
+if not active_model.is_trained:
     with st.spinner(f"Fitting {active_model.model_name} on training partition (N={len(X_train):,})..."):
         active_model.fit(X_train)
 

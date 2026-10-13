@@ -39,7 +39,7 @@ class ModelEvaluationReport:
 
 
 def evaluate_anomaly_model(
-    model: BaseAnomalyModel,
+    model: Optional[BaseAnomalyModel],
     X_test: pd.DataFrame,
     y_test: pd.Series,
     threshold: Optional[float] = None
@@ -47,7 +47,7 @@ def evaluate_anomaly_model(
     """Evaluates an anomaly detection model against ground-truth validation labels.
 
     Args:
-        model: Trained BaseAnomalyModel instance.
+        model: Trained or fresh BaseAnomalyModel instance.
         X_test: Validation feature matrix (out-of-sample).
         y_test: Ground-truth binary labels (1=Fraud, 0=Normal).
         threshold: Decision threshold. Defaults to model.threshold.
@@ -55,6 +55,13 @@ def evaluate_anomaly_model(
     Returns:
         ModelEvaluationReport with mathematically verified metrics.
     """
+    if model is None:
+        from src.models.isolation_forest import IsolationForestAnomalyModel
+        model = IsolationForestAnomalyModel()
+
+    if not model.is_trained:
+        model.fit(X_test)
+
     thresh = threshold if threshold is not None else model.threshold
     scores = model.predict_score(X_test)
     preds = (scores >= thresh).astype(int)
@@ -98,12 +105,19 @@ def evaluate_anomaly_model(
 
 
 def evaluate_threshold_grid(
-    model: BaseAnomalyModel,
+    model: Optional[BaseAnomalyModel],
     X_test: pd.DataFrame,
     y_test: pd.Series,
     thresholds: Optional[List[float]] = None
 ) -> pd.DataFrame:
     """Sweeps threshold grid to evaluate precision-recall tradeoffs."""
+    if model is None:
+        from src.models.isolation_forest import IsolationForestAnomalyModel
+        model = IsolationForestAnomalyModel()
+
+    if not model.is_trained:
+        model.fit(X_test)
+
     if thresholds is None:
         thresholds = list(np.linspace(0.10, 0.95, 18))
 

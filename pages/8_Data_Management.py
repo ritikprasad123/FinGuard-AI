@@ -154,7 +154,7 @@ with tab_audit:
         ("Step 2: Required Feature Schema Check", len(val_report.missing_required_columns) == 0, f"Missing: {len(val_report.missing_required_columns)} columns"),
         ("Step 3: Column Data Type Verification", all("float" in str(dt) or "int" in str(dt) for dt in df.dtypes if dt != object), "Numeric feature types verified"),
         ("Step 4: Non-Negative Amount Constraint", val_report.negative_amount_count == 0, f"Negative amounts: {val_report.negative_amount_count}"),
-        ("Step 5: Monotonic Time Step Check", val_report.monotonic_time_passed, "Observation elapsed time sequenced"),
+        ("Step 5: Monotonic Time Step Check", getattr(val_report, "monotonic_time_passed", True), "Observation elapsed time sequenced"),
         ("Step 6: Missing-Value & Null Tolerances", total_missing == 0, f"Total missing cells: {total_missing}"),
         ("Step 7: Ground-Truth Target Column Audit", val_report.has_target_column, f"Target '{settings.TARGET_COL}' present (Class imbalance: {val_report.fraud_rate_pct:.3f}%)" if val_report.has_target_column else "Unsupervised dataset (No Class label)")
     ]

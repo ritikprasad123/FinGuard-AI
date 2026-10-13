@@ -11,8 +11,8 @@ logger = get_logger("finguard.models.registry")
 _ACTIVE_MODEL: Optional[BaseAnomalyModel] = None
 
 
-def get_active_model() -> Optional[BaseAnomalyModel]:
-    """Returns the globally active inference model, auto-loading default artifact if present."""
+def get_active_model() -> BaseAnomalyModel:
+    """Returns the globally active inference model, auto-loading or instantiating Isolation Forest by default."""
     global _ACTIVE_MODEL
     if _ACTIVE_MODEL is None:
         if_path = settings.MODELS_DIR / "isolation_forest_default.joblib"
@@ -23,6 +23,10 @@ def get_active_model() -> Optional[BaseAnomalyModel]:
                 logger.info(f"Auto-loaded default Isolation Forest model from: {if_path}")
             except Exception as exc:
                 logger.warning(f"Could not auto-load default Isolation Forest artifact: {exc}")
+        if _ACTIVE_MODEL is None:
+            from src.models.isolation_forest import IsolationForestAnomalyModel
+            _ACTIVE_MODEL = IsolationForestAnomalyModel()
+            logger.info("Initialized default fresh Isolation Forest surveillance model.")
     return _ACTIVE_MODEL
 
 

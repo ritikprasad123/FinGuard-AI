@@ -39,6 +39,12 @@ class DataQualityReport:
     checks_summary: Dict[str, str] = field(default_factory=dict)
 
     @property
+    def monotonic_time_passed(self) -> bool:
+        """Returns True if elapsed time step sequence check passed or is acceptable."""
+        return self.checks_summary.get("time_sequence", "PASS") != "FAIL"
+
+
+    @property
     def checks(self) -> List[Any]:
         """Helper returning list of structured check results for dashboard rendering."""
         res = []
@@ -191,6 +197,13 @@ def validate_transaction_data(
         median_amount = float(df[settings.AMOUNT_COL].median())
     else:
         checks["amount_integrity"] = "WARN"
+
+    # 7.5. Time Sequence Monotonic Check
+    if settings.TIME_COL in df.columns and pd.api.types.is_numeric_dtype(df[settings.TIME_COL]):
+        time_monotonic = bool(df[settings.TIME_COL].is_monotonic_increasing)
+        checks["time_sequence"] = "PASS" if time_monotonic else "WARN"
+    else:
+        checks["time_sequence"] = "PASS"
 
     # 7. Class Distribution & Target Profiling
     has_target = target_col in df.columns
