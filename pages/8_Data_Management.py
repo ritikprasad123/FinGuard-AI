@@ -152,7 +152,7 @@ with tab_audit:
     checklist_items = [
         ("Step 1: Dataset Non-Empty Check", val_report.total_rows > 0, f"Row count: {val_report.total_rows:,}"),
         ("Step 2: Required Feature Schema Check", len(val_report.missing_required_columns) == 0, f"Missing: {len(val_report.missing_required_columns)} columns"),
-        ("Step 3: Column Data Type Verification", all("float" in str(dt) or "int" in str(dt) for dt in df.dtypes if dt != object), "Numeric feature types verified"),
+        ("Step 3: Column Data Type Verification", all(pd.api.types.is_numeric_dtype(df[c]) for c in df.columns if c not in ["Transaction_ID", "Timestamp", "_DATA_SOURCE", "_IS_DEMO", "Risk_Reason", "Risk_Tier", "Action_Required", "Anomaly_Indicators", "Prediction", "Severity", "investigation_status", "alert_id"]), "Numeric feature types verified"),
         ("Step 4: Non-Negative Amount Constraint", val_report.negative_amount_count == 0, f"Negative amounts: {val_report.negative_amount_count}"),
         ("Step 5: Monotonic Time Step Check", getattr(val_report, "monotonic_time_passed", True), "Observation elapsed time sequenced"),
         ("Step 6: Missing-Value & Null Tolerances", total_missing == 0, f"Total missing cells: {total_missing}"),
@@ -230,7 +230,10 @@ with tab_export:
     st.markdown("#### Export Formal Data Validation Audit Report")
     st.caption("Generate a signed Markdown quality assurance certificate for compliance filing.")
 
-    rep_md = generate_markdown_quality_report(val_report, dataset_source=st.session_state.get("data_source_type", "DEMO"))
+    try:
+        rep_md = generate_markdown_quality_report(val_report, dataset_source=st.session_state.get("data_source_type", "DEMO"))
+    except TypeError:
+        rep_md = generate_markdown_quality_report(val_report)
     st.markdown(rep_md)
 
     st.download_button(

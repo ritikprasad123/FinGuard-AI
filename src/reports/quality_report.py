@@ -1,6 +1,6 @@
 """Quality summary and executive audit report generator for FinGuard AI."""
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from src.data.validator import DataQualityReport
 
 
@@ -21,7 +21,11 @@ def generate_executive_quality_summary(report: DataQualityReport) -> Dict[str, A
     }
 
 
-def format_quality_markdown_report(report: DataQualityReport) -> str:
+def format_quality_markdown_report(
+    report: DataQualityReport,
+    dataset_source: Optional[str] = None,
+    **kwargs
+) -> str:
     """Formats full data quality audit into a structured Markdown document."""
     status_badge = "[PASSED]" if report.is_valid else "[FAILED]"
     lines = [
@@ -31,8 +35,10 @@ def format_quality_markdown_report(report: DataQualityReport) -> str:
         f"- **Missing Value Cells:** {report.missing_values_count:,} ({report.missing_values_pct:.2f}%)",
         f"- **Duplicate Rows:** {report.duplicate_rows_count:,} ({report.duplicate_rows_pct:.2f}%)",
         f"- **Financial Negative Amounts:** {report.negative_amount_count}",
-        ""
     ]
+    if dataset_source:
+        lines.append(f"- **Data Ingestion Source:** `{dataset_source}`")
+    lines.append("")
 
     if report.has_target_column:
         lines.append("#### Ground-Truth Class Distribution")
