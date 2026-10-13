@@ -156,7 +156,7 @@ with tab_audit:
         ("Step 4: Non-Negative Amount Constraint", val_report.negative_amount_count == 0, f"Negative amounts: {val_report.negative_amount_count}"),
         ("Step 5: Monotonic Time Step Check", getattr(val_report, "monotonic_time_passed", True), "Observation elapsed time sequenced"),
         ("Step 6: Missing-Value & Null Tolerances", total_missing == 0, f"Total missing cells: {total_missing}"),
-        ("Step 7: Ground-Truth Target Column Audit", val_report.has_target_column, f"Target '{settings.TARGET_COL}' present (Class imbalance: {val_report.fraud_rate_pct:.3f}%)" if val_report.has_target_column else "Unsupervised dataset (No Class label)")
+        ("Step 7: Ground-Truth Target Column Audit", val_report.has_target_column, f"Target '{settings.TARGET_COL}' present (Class imbalance: {val_report.fraud_rate_pct:.3f}%)" if (val_report.has_target_column and val_report.fraud_rate_pct is not None) else "Unsupervised dataset (No Class label)")
     ]
 
     for title, passed, detail in checklist_items:
@@ -180,13 +180,26 @@ with tab_schema:
     schema_rows = []
     for col in df.columns:
         null_count = int(df[col].isna().sum())
+        sample_min = "N/A"
+        sample_max = "N/A"
+        if pd.api.types.is_numeric_dtype(df[col]):
+            try:
+                min_val = df[col].dropna().min()
+                max_val = df[col].dropna().max()
+                if pd.notna(min_val):
+                    sample_min = round(float(min_val), 3)
+                if pd.notna(max_val):
+                    sample_max = round(float(max_val), 3)
+            except Exception:
+                pass
+
         schema_rows.append({
             "Column Name": col,
             "Data Type": str(df[col].dtype),
             "Null Count": null_count,
             "Null Rate": f"{(null_count / len(df)):.2%}",
-            "Sample Min": round(float(df[col].min()), 3) if np.issubdtype(df[col].dtype, np.number) else "N/A",
-            "Sample Max": round(float(df[col].max()), 3) if np.issubdtype(df[col].dtype, np.number) else "N/A"
+            "Sample Min": sample_min,
+            "Sample Max": sample_max
         })
     st.dataframe(pd.DataFrame(schema_rows), use_container_width=True, height=350)
 
